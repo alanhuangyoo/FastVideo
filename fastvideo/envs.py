@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     FASTVIDEO_INFERENCE_TORCH_COMPILE: bool = False
     FASTVIDEO_MINIMAX_H3_FUSIONS: str = ""
     FASTVIDEO_WORKER_MULTIPROC_METHOD: str = "spawn"
+    FASTVIDEO_EXTERNAL_LAUNCHER: bool = False
     FASTVIDEO_TARGET_DEVICE: str = "cuda"
     MAX_JOBS: str | None = None
     NVCC_THREADS: str | None = None
@@ -241,6 +242,14 @@ environment_variables: dict[str, Callable[[], Any]] = {
     # Use dedicated multiprocess context for workers.
     "FASTVIDEO_WORKER_MULTIPROC_METHOD":
     lambda: os.getenv("FASTVIDEO_WORKER_MULTIPROC_METHOD", "spawn"),
+
+    # If set (=1), inference does not spawn worker subprocesses. Each process
+    # started by an external launcher (for example, torchrun or srun) becomes
+    # one worker and initializes the distributed group through env://. All
+    # ranks must call generate() collectively; world rank 0 owns user-facing
+    # outputs.
+    "FASTVIDEO_EXTERNAL_LAUNCHER":
+    lambda: os.getenv("FASTVIDEO_EXTERNAL_LAUNCHER", "0") != "0",
 
     # Emit lightweight NVTX ranges for external profilers such as Nsight Systems.
     "FASTVIDEO_NVTX_PROFILE":
